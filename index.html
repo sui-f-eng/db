@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>豆包截图助手 - Chrome 扩展</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+    background: #f5f6f8;
+    color: #1a1a2e;
+    line-height: 1.6;
+  }
+  .container { max-width: 820px; margin: 0 auto; padding: 0 24px; }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #fff;
+    padding: 56px 0 48px;
+    text-align: center;
+  }
+  header h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.3px; }
+  header p { margin-top: 12px; font-size: 16px; color: #aab; }
+  header .version { display: inline-block; margin-top: 16px; padding: 4px 14px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 13px; color: #ccd; }
+
+  /* Section */
+  section { padding: 40px 0; }
+  section + section { border-top: 1px solid #e0e2e6; }
+  h2 { font-size: 20px; font-weight: 600; margin-bottom: 20px; }
+  h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+
+  /* Features */
+  .features { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .feature-card {
+    background: #fff; border-radius: 8px; padding: 20px 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .feature-card .icon { font-size: 22px; margin-bottom: 6px; }
+  .feature-card h3 { font-size: 15px; }
+  .feature-card p { font-size: 13px; color: #555; margin-top: 4px; }
+
+  /* Hotkeys */
+  .hotkey-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .hotkey-table th, .hotkey-table td { text-align: left; padding: 12px 20px; font-size: 14px; border-bottom: 1px solid #eee; }
+  .hotkey-table th { background: #f8f9fb; font-weight: 600; font-size: 13px; color: #666; }
+  .hotkey-table tr:last-child td { border-bottom: none; }
+  kbd {
+    display: inline-block; padding: 3px 8px; font-size: 12px; font-family: inherit;
+    background: #f0f1f3; border: 1px solid #d0d2d6; border-radius: 4px;
+    box-shadow: 0 1px 0 #b0b2b6; line-height: 1.4;
+  }
+
+  /* Download */
+  .download-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px;
+    font-size: 14px; font-weight: 500; border: none; border-radius: 8px;
+    cursor: pointer; text-decoration: none; transition: background 0.15s;
+  }
+  .btn-primary { background: #1a1a2e; color: #fff; }
+  .btn-primary:hover { background: #2a2a4e; }
+  .btn-secondary { background: #e8e9ed; color: #333; }
+  .btn-secondary:hover { background: #d8d9dd; }
+
+  /* Instructions */
+  .steps { list-style: none; counter-reset: step; }
+  .steps li {
+    counter-increment: step; position: relative;
+    padding-left: 44px; padding-bottom: 24px; font-size: 14px;
+  }
+  .steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 0;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #1a1a2e; color: #fff; font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .steps li:last-child { padding-bottom: 0; }
+  .steps code {
+    display: inline-block; padding: 1px 6px; background: #e8e9ed;
+    border-radius: 3px; font-size: 13px; font-family: inherit;
+  }
+
+  /* File listing */
+  .file-list { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .file-item {
+    background: #fff; border-radius: 8px; padding: 14px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); flex: 1; min-width: 180px;
+  }
+  .file-item .name { font-weight: 600; font-size: 14px; }
+  .file-item .size { font-size: 12px; color: #888; margin-top: 2px; }
+  .file-item .action { margin-top: 8px; }
+  .file-item .action a { font-size: 13px; color: #1a1a2e; text-decoration: underline; }
+
+  /* Footer */
+  footer { text-align: center; padding: 32px 0; font-size: 13px; color: #888; border-top: 1px solid #e0e2e6; }
+
+  @media (max-width: 600px) {
+    .features { grid-template-columns: 1fr; }
+    header h1 { font-size: 24px; }
+    .download-buttons { flex-direction: column; }
+    .download-buttons .btn { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>豆包截图助手</h1>
+    <p>截图即识的 Chrome 扩展，结合豆包推理模型自动答题</p>
+    <span class="version">v1.3.2</span>
+  </div>
+</header>
+
+<main>
+  <section>
+    <div class="container">
+      <h2>功能</h2>
+      <div class="features">
+        <div class="feature-card">
+          <div class="icon">📸</div>
+          <h3>截图识别</h3>
+          <p>一键截图，调用豆包推理模型识别题目并给出答案</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">📋</div>
+          <h3>自动复制</h3>
+          <p>识别结果自动写入剪贴板，无需手动选中复制</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">⚡</div>
+          <h3>快捷键操作</h3>
+          <p>全键盘操作，不打断工作流</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🔓</div>
+          <h3>解锁复制</h3>
+          <p>自动解除 Educoder 等平台的复制限制（仅相关页面生效）</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h2>快捷键</h2>
+      <table class="hotkey-table">
+        <thead>
+          <tr><th>操作</th><th>Mac</th><th>Windows / Linux</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>截图识别 → 复制</td>
+            <td><kbd>⌘</kbd> + <kbd>⌥</kbd> + <kbd>T</kbd></td>
+            <td><kbd>⇧</kbd> + <kbd>⌥</kbd> + <kbd>T</kbd></td>
+          </tr>
+          <tr>
+            <td>截图识别 → 显示结果</td>
+            <td><kbd>⌘</kbd> + <kbd>⌥</kbd> + <kbd>Y</kbd></td>
+            <td><kbd>⇧</kbd> + <kbd>⌥</kbd> + <kbd>Y</kbd></td>
+          </tr>
+          <tr>
+            <td>显隐结果面板</td>
+            <td><kbd>⌘</kbd> + <kbd>⌥</kbd> + <kbd>U</kbd></td>
+            <td><kbd>⇧</kbd> + <kbd>⌥</kbd> + <kbd>U</kbd></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section style="border-top: 1px solid #e0e2e6;">
+    <div class="container">
+      <h2>下载</h2>
+      <p style="font-size:14px;color:#555;">下载扩展文件后，在 Chrome 扩展管理页加载已解压的扩展即可使用。</p>
+      <div class="file-list">
+        <div class="file-item">
+          <div class="name">manifest.json</div>
+          <div class="size">661 B</div>
+          <div class="action"><a href="downloads/manifest.json" download>下载</a></div>
+        </div>
+        <div class="file-item">
+          <div class="name">assistant.js</div>
+          <div class="size">10.9 KB</div>
+          <div class="action"><a href="downloads/assistant.js" download>下载</a></div>
+        </div>
+        <div class="file-item">
+          <div class="name">educoder-copy.js</div>
+          <div class="size">9.9 KB</div>
+          <div class="action"><a href="downloads/educoder-copy.js" download>下载</a></div>
+        </div>
+      </div>
+      <div class="download-buttons">
+        <a href="downloads/suif-extension.zip" class="btn btn-primary" download>📦 下载全部（zip）</a>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h2>安装步骤</h2>
+      <ol class="steps">
+        <li>
+          <strong>下载扩展文件</strong><br>
+          点击上方按钮下载 zip 压缩包，解压到本地文件夹。
+        </li>
+        <li>
+          <strong>打开 Chrome 扩展管理</strong><br>
+          在地址栏输入 <code>chrome://extensions</code> 并回车。
+        </li>
+        <li>
+          <strong>开启开发者模式</strong><br>
+          页面右上角打开「开发者模式」开关。
+        </li>
+        <li>
+          <strong>加载扩展</strong><br>
+          点击左上角「加载已解压的扩展」，选择刚才解压的文件夹。
+        </li>
+        <li>
+          <strong>获取 API Key</strong><br>
+          首次使用按快捷键触发截图，会弹出输入框，填入豆包 API Key 即可。
+        </li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">豆包截图助手 · Chrome 扩展</div>
+</footer>
+
+</body>
+</html>
